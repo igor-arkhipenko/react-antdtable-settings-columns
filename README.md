@@ -32,9 +32,9 @@ cd react-antdtable-settings-columns
 npm install
 ```
 
-## Development
+## Разработка
 
-To start the development server:
+Для старта dev-сервера запустите команду:
 
 ```bash
 npm run dev
