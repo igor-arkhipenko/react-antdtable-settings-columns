@@ -1,29 +1,33 @@
-# React Ant Design Table Example
+# React Ant Design Table with Column Settings
 
-This project demonstrates the implementation of a table using Ant Design (antd) in a React application with TypeScript.
+Компонент таблицы на основе Ant Design с расширенными возможностями управления колонками. Позволяет пользователям настраивать видимость и порядок колонок с помощью удобного интерфейса.
 
-## Features
+## Особенности
 
-- Modern React with TypeScript
-- Ant Design Table component
-- Responsive design
-- Built-in sorting capabilities
-- Clean and modern UI
+- Управление видимостью колонок
+- Drag-and-drop для изменения порядка колонок
+- Сохранение настроек в localStorage
+- Возможность отмены изменений
+- Адаптивный дизайн
+- Типизация с помощью TypeScript
 
-## Prerequisites
+## Технологии
 
-- Node.js (version 14 or higher)
-- npm (comes with Node.js)
+- React
+- TypeScript
+- Ant Design
+- @dnd-kit (для drag-and-drop функциональности)
+- CSS Modules
 
-## Installation
+## Установка
 
-1. Clone the repository:
+1. Клонируйте репозиторий:
 ```bash
 git clone https://github.com/yourusername/react-antdtable-settings-columns.git
 cd react-antdtable-settings-columns
 ```
 
-2. Install dependencies:
+2. Установите зависимости:
 ```bash
 npm install
 ```
@@ -36,39 +40,71 @@ To start the development server:
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173`
+## Использование
 
-## Building for Production
+```tsx
+import { TableComponent } from './components/TableComponent';
 
-To create a production build:
-
-```bash
-npm run build
+function App() {
+  return (
+    <div>
+      <TableComponent />
+    </div>
+  );
+}
 ```
 
-## Project Structure
+### Настройка колонок
+
+Компонент поддерживает следующие настройки для каждой колонки:
+
+```typescript
+interface ColumnConfig {
+  key: string;
+  title: string;
+  dataIndex: string;
+  sorter?: boolean;
+}
+```
+
+### Сохранение настроек
+
+Настройки колонок (видимость и порядок) автоматически сохраняются в localStorage и восстанавливаются при перезагрузке страницы.
+
+## Структура проекта
 
 ```
 src/
-  ├── App.tsx              # Main application component
-  ├── TableComponent.tsx   # Table implementation using antd
-  └── App.css             # Application styles
+├── components/
+│   ├── ColumnSettings.tsx      # Компонент настроек колонок
+│   └── ColumnSettings.module.css # Стили для настроек колонок
+├── TableComponent.tsx          # Основной компонент таблицы
+├── types.ts                    # TypeScript типы
+└── constants.ts               # Константы и конфигурация
 ```
 
-## Available Scripts
+## Разработка
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run lint` - Run ESLint
-- `npm run preview` - Preview production build
+### Требования
 
-## Dependencies
+- Node.js >= 14
+- npm >= 6
 
-- React
-- Ant Design (antd)
-- TypeScript
-- Vite
+### Скрипты
 
-## License
+- `npm run dev` - Запуск проекта в режиме разработки
+- `npm run build` - Сборка проекта
+- `npm test` - Запуск тестов
+- `npm lint` - Проверка кода линтером
+
+## Лицензия
 
 MIT
+
+## Вклад в проект
+
+1. Форкните репозиторий
+2. Создайте ветку для новой функциональности (`git checkout -b feature/amazing-feature`)
+3. Зафиксируйте изменения (`git commit -m 'Add some amazing feature'`)
+4. Отправьте изменения в репозиторий (`git push origin feature/amazing-feature`)
+5. Откройте Pull Request
