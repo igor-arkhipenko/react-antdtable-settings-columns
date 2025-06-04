@@ -58,7 +58,6 @@ const SortableItem: React.FC<SortableItemProps> = ({ id, title, checked, onChang
 interface ColumnSettingsProps {
   tempVisibility: ColumnVisibility;
   onVisibilityChange: (column: keyof ColumnVisibility, checked: boolean) => void;
-  onSelectAll: (checked: boolean) => void;
   onCancel: () => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -69,15 +68,12 @@ interface ColumnSettingsProps {
 export const ColumnSettings: React.FC<ColumnSettingsProps> = ({
   tempVisibility,
   onVisibilityChange,
-  onSelectAll,
   onCancel,
   open,
   onOpenChange,
   columnOrder,
   onColumnOrderChange,
 }) => {
-  const isAllSelected = Object.values(tempVisibility).every(value => value === true);
-
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -102,13 +98,6 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({
         <h4>Показать столбцы</h4>
       </div>
       <Space direction="vertical" style={{ width: '100%' }}>
-        <Checkbox
-          checked={isAllSelected}
-          onChange={(e) => onSelectAll(e.target.checked)}
-          className={styles.selectAllCheckbox}
-        >
-          Все
-        </Checkbox>
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}

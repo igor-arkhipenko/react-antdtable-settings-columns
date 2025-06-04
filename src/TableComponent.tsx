@@ -56,16 +56,6 @@ const TableComponent: React.FC = () => {
     setColumnVisibility(newVisibility);
   }, [tempVisibility]);
 
-  const handleSelectAll = useCallback((checked: boolean) => {
-    const newVisibility = {
-      name: checked,
-      age: checked,
-      address: checked,
-    };
-    setTempVisibility(newVisibility);
-    setColumnVisibility(newVisibility);
-  }, []);
-
   const handleCancelChanges = useCallback(() => {
     setTempVisibility(DEFAULT_VISIBILITY);
     setColumnVisibility(DEFAULT_VISIBILITY);
@@ -103,7 +93,6 @@ const TableComponent: React.FC = () => {
       <ColumnSettings
         tempVisibility={tempVisibility}
         onVisibilityChange={handleColumnVisibilityChange}
-        onSelectAll={handleSelectAll}
         onCancel={handleCancelChanges}
         open={popoverOpen}
         onOpenChange={setPopoverOpen}
