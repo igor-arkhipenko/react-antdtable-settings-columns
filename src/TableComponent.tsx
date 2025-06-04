@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Table, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { ColumnSettings } from './components/ColumnSettings';
-import type { DataType, ColumnVisibility, ColumnKey, TableSettings } from './types';
+import type { DataType, ColumnKey, TableSettings } from './types';
 import { STORAGE_KEYS, DEFAULT_VISIBILITY, COLUMN_CONFIGS, TABLE_DATA } from './constants';
 
 const TableComponent: React.FC = () => {
