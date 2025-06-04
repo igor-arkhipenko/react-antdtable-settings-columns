@@ -1,12 +1,15 @@
-import type { ColumnConfig } from './types';
+import type { ColumnConfig, StorageKeys } from './types';
 
-export const STORAGE_KEY = 'table-columns-visibility';
+export const STORAGE_KEYS: StorageKeys = {
+  visibility: 'table-columns-visibility',
+  order: 'table-columns-order',
+} as const;
 
 export const DEFAULT_VISIBILITY = {
   name: true,
   age: true,
   address: true,
-};
+} as const;
 
 export const COLUMN_CONFIGS: ColumnConfig[] = [
   {
@@ -27,7 +30,7 @@ export const COLUMN_CONFIGS: ColumnConfig[] = [
     dataIndex: 'address',
     sorter: (a, b) => a.address.localeCompare(b.address),
   },
-];
+] as const;
 
 export const TABLE_DATA = [
   {
@@ -48,4 +51,4 @@ export const TABLE_DATA = [
     age: 28,
     address: 'Казань, ул. Баумана 5',
   },
-]; 
+] as const; 

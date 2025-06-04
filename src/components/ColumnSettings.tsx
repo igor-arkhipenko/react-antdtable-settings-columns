@@ -18,18 +18,11 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { ColumnVisibility } from '../types';
+import type { ColumnVisibility, ColumnKey, SortableItemProps } from '../types';
 import { COLUMN_CONFIGS } from '../constants';
 import styles from './ColumnSettings.module.css';
 
-interface SortableItemProps {
-  id: string;
-  title: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}
-
-const SortableItem: React.FC<SortableItemProps> = ({ id, title, checked, onChange }) => {
+const SortableItem: React.FC<SortableItemProps> = ({ id, title, checked, onChange, disabled }) => {
   const {
     attributes,
     listeners,
@@ -45,7 +38,7 @@ const SortableItem: React.FC<SortableItemProps> = ({ id, title, checked, onChang
 
   return (
     <div ref={setNodeRef} style={style} className={styles.sortableItem} {...attributes}>
-      <Checkbox checked={checked} onChange={(e) => onChange(e.target.checked)}>
+      <Checkbox checked={checked} onChange={(e) => onChange(e.target.checked)} disabled={disabled}>
         {title}
       </Checkbox>
       <div {...listeners} className={styles.dragHandle}>
@@ -57,12 +50,12 @@ const SortableItem: React.FC<SortableItemProps> = ({ id, title, checked, onChang
 
 interface ColumnSettingsProps {
   tempVisibility: ColumnVisibility;
-  onVisibilityChange: (column: keyof ColumnVisibility, checked: boolean) => void;
+  onVisibilityChange: (column: ColumnKey, checked: boolean) => void;
   onCancel: () => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  columnOrder: string[];
-  onColumnOrderChange: (newOrder: string[]) => void;
+  columnOrder: ColumnKey[];
+  onColumnOrderChange: (newOrder: ColumnKey[]) => void;
 }
 
 export const ColumnSettings: React.FC<ColumnSettingsProps> = ({
@@ -85,11 +78,21 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({
     const { active, over } = event;
     
     if (active.id !== over?.id) {
-      const oldIndex = columnOrder.indexOf(active.id as string);
-      const newIndex = columnOrder.indexOf(over?.id as string);
+      const oldIndex = columnOrder.indexOf(active.id as ColumnKey);
+      const newIndex = columnOrder.indexOf(over?.id as ColumnKey);
       const newOrder = arrayMove(columnOrder, oldIndex, newIndex);
       onColumnOrderChange(newOrder);
     }
+  };
+
+  const handleVisibilityChange = (column: ColumnKey, checked: boolean) => {
+    if (!checked) {
+      const visibleColumnsCount = Object.values(tempVisibility).filter(Boolean).length;
+      if (visibleColumnsCount <= 1) {
+        return;
+      }
+    }
+    onVisibilityChange(column, checked);
   };
 
   const content = (
@@ -110,13 +113,16 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({
             {columnOrder.map((columnKey) => {
               const config = COLUMN_CONFIGS.find(c => c.key === columnKey);
               if (!config) return null;
+              const isLastVisible = tempVisibility[config.key] && 
+                Object.values(tempVisibility).filter(Boolean).length === 1;
               return (
                 <SortableItem
                   key={config.key}
                   id={config.key}
                   title={config.title}
                   checked={tempVisibility[config.key]}
-                  onChange={(checked) => onVisibilityChange(config.key, checked)}
+                  onChange={(checked) => handleVisibilityChange(config.key, checked)}
+                  disabled={isLastVisible}
                 />
               );
             })}

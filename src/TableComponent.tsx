@@ -1,73 +1,72 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Table } from 'antd';
+import { Table, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { ColumnSettings } from './components/ColumnSettings';
-import type { DataType, ColumnVisibility } from './types';
-import { STORAGE_KEY, DEFAULT_VISIBILITY, COLUMN_CONFIGS, TABLE_DATA } from './constants';
-
-const ORDER_STORAGE_KEY = 'table-columns-order';
+import type { DataType, ColumnVisibility, ColumnKey, TableSettings } from './types';
+import { STORAGE_KEYS, DEFAULT_VISIBILITY, COLUMN_CONFIGS, TABLE_DATA } from './constants';
 
 const TableComponent: React.FC = () => {
-  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>(() => {
+  const [tableSettings, setTableSettings] = useState<TableSettings>(() => {
     try {
-      const savedVisibility = localStorage.getItem(STORAGE_KEY);
-      return savedVisibility ? JSON.parse(savedVisibility) : DEFAULT_VISIBILITY;
+      const savedVisibility = localStorage.getItem(STORAGE_KEYS.visibility);
+      const savedOrder = localStorage.getItem(STORAGE_KEYS.order);
+      
+      return {
+        visibility: savedVisibility ? JSON.parse(savedVisibility) : DEFAULT_VISIBILITY,
+        order: savedOrder ? JSON.parse(savedOrder) : COLUMN_CONFIGS.map(config => config.key),
+      };
     } catch (error) {
-      console.error('Error loading column visibility settings:', error);
-      return DEFAULT_VISIBILITY;
+      console.error('Error loading table settings:', error);
+      message.error('Ошибка загрузки настроек таблицы');
+      return {
+        visibility: DEFAULT_VISIBILITY,
+        order: COLUMN_CONFIGS.map(config => config.key),
+      };
     }
   });
 
-  const [columnOrder, setColumnOrder] = useState<string[]>(() => {
-    try {
-      const savedOrder = localStorage.getItem(ORDER_STORAGE_KEY);
-      return savedOrder ? JSON.parse(savedOrder) : COLUMN_CONFIGS.map(config => config.key);
-    } catch (error) {
-      console.error('Error loading column order:', error);
-      return COLUMN_CONFIGS.map(config => config.key);
-    }
-  });
-
-  const [tempVisibility, setTempVisibility] = useState(columnVisibility);
+  const [tempVisibility, setTempVisibility] = useState(tableSettings.visibility);
   const [popoverOpen, setPopoverOpen] = useState(false);
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(columnVisibility));
+      localStorage.setItem(STORAGE_KEYS.visibility, JSON.stringify(tableSettings.visibility));
+      localStorage.setItem(STORAGE_KEYS.order, JSON.stringify(tableSettings.order));
     } catch (error) {
-      console.error('Error saving column visibility settings:', error);
+      console.error('Error saving table settings:', error);
+      message.error('Ошибка сохранения настроек таблицы');
     }
-  }, [columnVisibility]);
+  }, [tableSettings]);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(columnOrder));
-    } catch (error) {
-      console.error('Error saving column order:', error);
-    }
-  }, [columnOrder]);
-
-  const handleColumnVisibilityChange = useCallback((column: keyof ColumnVisibility, checked: boolean) => {
+  const handleColumnVisibilityChange = useCallback((column: ColumnKey, checked: boolean) => {
     const newVisibility = {
       ...tempVisibility,
       [column]: checked
     };
     setTempVisibility(newVisibility);
-    setColumnVisibility(newVisibility);
+    setTableSettings(prev => ({
+      ...prev,
+      visibility: newVisibility
+    }));
   }, [tempVisibility]);
 
   const handleCancelChanges = useCallback(() => {
     setTempVisibility(DEFAULT_VISIBILITY);
-    setColumnVisibility(DEFAULT_VISIBILITY);
-    setColumnOrder(COLUMN_CONFIGS.map(config => config.key));
+    setTableSettings({
+      visibility: DEFAULT_VISIBILITY,
+      order: COLUMN_CONFIGS.map(config => config.key),
+    });
     setPopoverOpen(false);
   }, []);
 
-  const handleColumnOrderChange = useCallback((newOrder: string[]) => {
-    setColumnOrder(newOrder);
+  const handleColumnOrderChange = useCallback((newOrder: ColumnKey[]) => {
+    setTableSettings(prev => ({
+      ...prev,
+      order: newOrder
+    }));
   }, []);
 
-  const columns: ColumnsType<DataType> = columnOrder.map(columnKey => {
+  const columns: ColumnsType<DataType> = tableSettings.order.map(columnKey => {
     const config = COLUMN_CONFIGS.find(c => c.key === columnKey);
     if (!config) return null;
     return {
@@ -76,7 +75,7 @@ const TableComponent: React.FC = () => {
       key: config.key,
       sorter: config.sorter,
       sortDirections: ['ascend', 'descend'],
-      hidden: !columnVisibility[config.key],
+      hidden: !tableSettings.visibility[config.key],
       onHeaderCell: () => ({
         onContextMenu: (e: React.MouseEvent) => {
           e.preventDefault();
@@ -96,7 +95,7 @@ const TableComponent: React.FC = () => {
         onCancel={handleCancelChanges}
         open={popoverOpen}
         onOpenChange={setPopoverOpen}
-        columnOrder={columnOrder}
+        columnOrder={tableSettings.order}
         onColumnOrderChange={handleColumnOrderChange}
       />
       <Table 

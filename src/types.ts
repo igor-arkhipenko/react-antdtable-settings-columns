@@ -16,4 +16,24 @@ export interface ColumnConfig {
   title: string;
   dataIndex: keyof DataType;
   sorter: (a: DataType, b: DataType) => number;
+}
+
+export type ColumnKey = keyof ColumnVisibility;
+
+export interface StorageKeys {
+  visibility: string;
+  order: string;
+}
+
+export interface TableSettings {
+  visibility: ColumnVisibility;
+  order: ColumnKey[];
+}
+
+export interface SortableItemProps {
+  id: ColumnKey;
+  title: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
 } 
