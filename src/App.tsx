@@ -1,6 +1,5 @@
 import TableComponent from './TableComponent';
 import 'antd/dist/reset.css';
-import './App.css'
 
 function App() {
   return (
