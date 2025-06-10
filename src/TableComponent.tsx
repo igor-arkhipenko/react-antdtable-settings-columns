@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Table, message } from 'antd';
+import { Table, message, Input, Button, Card, Space } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { ColumnSettings } from './components/ColumnSettings';
 import type { DataType, ColumnKey, TableSettings } from './types';
@@ -27,6 +27,8 @@ const TableComponent: React.FC = () => {
 
   const [tempVisibility, setTempVisibility] = useState(tableSettings.visibility);
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [filteredData, setFilteredData] = useState<DataType[]>([...TABLE_DATA]);
 
   useEffect(() => {
     try {
@@ -37,6 +39,29 @@ const TableComponent: React.FC = () => {
       message.error('Ошибка сохранения настроек таблицы');
     }
   }, [tableSettings]);
+
+  const handleFilterChange = (columnKey: string, value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [columnKey]: value
+    }));
+  };
+
+  const handleSearch = () => {
+    const filtered = TABLE_DATA.filter(item => {
+      return Object.entries(filters).every(([key, value]) => {
+        if (!value) return true;
+        const itemValue = String(item[key as keyof DataType]).toLowerCase();
+        return itemValue.includes(value.toLowerCase());
+      });
+    });
+    setFilteredData(filtered);
+  };
+
+  const handleReset = () => {
+    setFilters({});
+    setFilteredData([...TABLE_DATA]);
+  };
 
   const handleColumnVisibilityChange = useCallback((column: ColumnKey, checked: boolean) => {
     const newVisibility = {
@@ -88,21 +113,51 @@ const TableComponent: React.FC = () => {
   const visibleColumns = columns.filter(col => !col.hidden);
 
   return (
-    <div style={{ padding: '24px' }}>
-      <ColumnSettings
-        tempVisibility={tempVisibility}
-        onVisibilityChange={handleColumnVisibilityChange}
-        onCancel={handleCancelChanges}
-        open={popoverOpen}
-        onOpenChange={setPopoverOpen}
-        columnOrder={tableSettings.order}
-        onColumnOrderChange={handleColumnOrderChange}
-      />
-      <Table 
-        columns={visibleColumns} 
-        dataSource={TABLE_DATA}
-        pagination={{ pageSize: 10 }}
-      />
+    <div style={{ padding: '24px', display: 'flex', gap: '24px' }}>
+      <div style={{ flex: 1 }}>
+        <ColumnSettings
+          tempVisibility={tempVisibility}
+          onVisibilityChange={handleColumnVisibilityChange}
+          onCancel={handleCancelChanges}
+          open={popoverOpen}
+          onOpenChange={setPopoverOpen}
+          columnOrder={tableSettings.order}
+          onColumnOrderChange={handleColumnOrderChange}
+        />
+        <Table 
+          columns={visibleColumns} 
+          dataSource={filteredData}
+          pagination={{ pageSize: 10 }}
+        />
+      </div>
+      <Card 
+        title="Фильтры" 
+        style={{ width: 300 }}
+        extra={
+          <Space>
+            <Button type="primary" onClick={handleSearch}>
+              Найти
+            </Button>
+            <Button onClick={handleReset}>
+              Сбросить
+            </Button>
+          </Space>
+        }
+      >
+        <Space direction="vertical" style={{ width: '100%' }}>
+          {COLUMN_CONFIGS.map(config => (
+            <div key={config.key}>
+              <div style={{ marginBottom: 8 }}>{config.title}</div>
+              <Input
+                placeholder={`Введите ${config.title.toLowerCase()}`}
+                value={filters[config.key] || ''}
+                onChange={e => handleFilterChange(config.key, e.target.value)}
+                allowClear
+              />
+            </div>
+          ))}
+        </Space>
+      </Card>
     </div>
   );
 };
