@@ -73,6 +73,15 @@ const TableComponent: React.FC = () => {
       ...prev,
       visibility: newVisibility
     }));
+
+    // Если колонка скрывается, очищаем соответствующий фильтр
+    if (!checked) {
+      setFilters(prev => {
+        const newFilters = { ...prev };
+        delete newFilters[column];
+        return newFilters;
+      });
+    }
   }, [tempVisibility]);
 
   const handleCancelChanges = useCallback(() => {
@@ -132,7 +141,7 @@ const TableComponent: React.FC = () => {
       </div>
       <Card 
         title="Фильтры" 
-        style={{ width: 300 }}
+        style={{ width: 360 }}
         extra={
           <Space>
             <Button type="primary" onClick={handleSearch}>
@@ -145,17 +154,19 @@ const TableComponent: React.FC = () => {
         }
       >
         <Space direction="vertical" style={{ width: '100%' }}>
-          {COLUMN_CONFIGS.map(config => (
-            <div key={config.key}>
-              <div style={{ marginBottom: 8 }}>{config.title}</div>
-              <Input
-                placeholder={`Введите ${config.title.toLowerCase()}`}
-                value={filters[config.key] || ''}
-                onChange={e => handleFilterChange(config.key, e.target.value)}
-                allowClear
-              />
-            </div>
-          ))}
+          {COLUMN_CONFIGS
+            .filter(config => tableSettings.visibility[config.key])
+            .map(config => (
+              <div key={config.key}>
+                <div style={{ marginBottom: 8 }}>{config.title}</div>
+                <Input
+                  placeholder={`Введите ${config.title.toLowerCase()}`}
+                  value={filters[config.key] || ''}
+                  onChange={e => handleFilterChange(config.key, e.target.value)}
+                  allowClear
+                />
+              </div>
+            ))}
         </Space>
       </Card>
     </div>
