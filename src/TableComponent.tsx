@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Table, message, Input, Button, Card, Space } from 'antd';
-import { SettingOutlined } from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
+import { Row, Col, Table, message, Input, Button, Card, Space, Flex, Tooltip } from 'antd';
+import { SettingOutlined, FileExcelOutlined } from '@ant-design/icons';
+import type { ColumnsType, ColumnType } from 'antd/es/table';
 import { ColumnSettings } from './components/ColumnSettings';
 import type { DataType, ColumnKey, TableSettings } from './types';
 import { STORAGE_KEYS, DEFAULT_VISIBILITY, COLUMN_CONFIGS, TABLE_DATA } from './constants';
@@ -11,7 +11,7 @@ const TableComponent: React.FC = () => {
     try {
       const savedVisibility = localStorage.getItem(STORAGE_KEYS.visibility);
       const savedOrder = localStorage.getItem(STORAGE_KEYS.order);
-      
+
       return {
         visibility: savedVisibility ? JSON.parse(savedVisibility) : DEFAULT_VISIBILITY,
         order: savedOrder ? JSON.parse(savedOrder) : COLUMN_CONFIGS.map(config => config.key),
@@ -116,65 +116,116 @@ const TableComponent: React.FC = () => {
 
   const visibleColumns = columns.filter(col => !col.hidden);
 
+  const handleExportToExcel = async () => {
+    try {
+      const response = await fetch('/api/export-excel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: filteredData,
+          columns: visibleColumns.map(col => ({
+            title: col.title,
+            dataIndex: (col as ColumnType<DataType>).dataIndex,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'table-export.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      message.success('Файл успешно выгружен');
+    } catch (error) {
+      console.error('Export error:', error);
+      message.error('Ошибка при выгрузке файла');
+    }
+  };
+
   return (
-    <div style={{ padding: '24px', display: 'flex', gap: '24px' }}>
-      <div style={{ flex: 1 }}>
-        <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'flex-end' }}>
-          <ColumnSettings
-            tempVisibility={tempVisibility}
-            onVisibilityChange={handleColumnVisibilityChange}
-            onCancel={handleCancelChanges}
-            open={popoverOpen}
-            onOpenChange={setPopoverOpen}
-            columnOrder={tableSettings.order}
-            onColumnOrderChange={handleColumnOrderChange}
-            trigger={
+    <>
+      <Row>
+        <Col span={18}>
+          <Flex justify='end' align='center'>
+            <Space>
               <Button 
-                icon={<SettingOutlined />} 
-                onClick={() => setPopoverOpen(true)}
+                type="primary" 
+                icon={<FileExcelOutlined />}
+                onClick={handleExportToExcel}
               >
-                Настройки колонок
+                Выгрузка в Excel
               </Button>
-            }
+              <ColumnSettings
+                tempVisibility={tempVisibility}
+                onVisibilityChange={handleColumnVisibilityChange}
+                onCancel={handleCancelChanges}
+                open={popoverOpen}
+                onOpenChange={setPopoverOpen}
+                columnOrder={tableSettings.order}
+                onColumnOrderChange={handleColumnOrderChange}
+                trigger={
+                  <Tooltip title='Настройки колонок'>
+                    <Button type='link' icon={<SettingOutlined />} onClick={() => setPopoverOpen(true)} />
+                  </Tooltip>
+                }
+              />
+            </Space>
+          </Flex>
+        </Col>
+      </Row>
+
+      <Row gutter={16}>
+        <Col span={18}>
+          <Table
+            columns={visibleColumns}
+            dataSource={filteredData}
+            pagination={{ pageSize: 10 }}
           />
-        </div>
-        <Table 
-          columns={visibleColumns} 
-          dataSource={filteredData}
-          pagination={{ pageSize: 10 }}
-        />
-      </div>
-      <Card 
-        title="Фильтры" 
-        style={{ width: 360 }}
-        extra={
-          <Space>
-            <Button type="primary" onClick={handleSearch}>
-              Найти
-            </Button>
-            <Button onClick={handleReset}>
-              Сбросить
-            </Button>
-          </Space>
-        }
-      >
-        <Space direction="vertical" style={{ width: '100%' }}>
-          {COLUMN_CONFIGS
-            .filter(config => tableSettings.visibility[config.key])
-            .map(config => (
-              <div key={config.key}>
-                <div style={{ marginBottom: 8 }}>{config.title}</div>
-                <Input
-                  placeholder={`Введите ${config.title.toLowerCase()}`}
-                  value={filters[config.key] || ''}
-                  onChange={e => handleFilterChange(config.key, e.target.value)}
-                  allowClear
-                />
-              </div>
-            ))}
-        </Space>
-      </Card>
-    </div>
+        </Col>
+        <Col span={6}>
+          <Card
+            title="Фильтры"
+            extra={
+              <Space>
+                <Button type="primary" onClick={handleSearch}>
+                  Найти
+                </Button>
+                <Button onClick={handleReset}>
+                  Сбросить
+                </Button>
+              </Space>
+            }
+          >
+            <Space direction="vertical" style={{ width: '100%' }}>
+              {COLUMN_CONFIGS
+                .filter(config => tableSettings.visibility[config.key])
+                .map(config => (
+                  <div key={config.key}>
+                    <div style={{ marginBottom: 8 }}>{config.title}</div>
+                    <Input
+                      placeholder={`Введите ${config.title.toLowerCase()}`}
+                      value={filters[config.key] || ''}
+                      onChange={e => handleFilterChange(config.key, e.target.value)}
+                      allowClear
+                    />
+                  </div>
+                ))}
+            </Space>
+          </Card>
+        </Col>
+      </Row>
+    </>
   );
 };
 
