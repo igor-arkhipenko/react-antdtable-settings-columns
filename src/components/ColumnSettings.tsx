@@ -1,4 +1,5 @@
 import React from 'react';
+import type { ReactNode } from 'react';
 import { Popover, Checkbox, Button, Space } from 'antd';
 import { HolderOutlined, RollbackOutlined } from '@ant-design/icons';
 import {
@@ -56,6 +57,7 @@ interface ColumnSettingsProps {
   onOpenChange: (open: boolean) => void;
   columnOrder: ColumnKey[];
   onColumnOrderChange: (newOrder: ColumnKey[]) => void;
+  trigger: ReactNode;
 }
 
 export const ColumnSettings: React.FC<ColumnSettingsProps> = ({
@@ -66,6 +68,7 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({
   onOpenChange,
   columnOrder,
   onColumnOrderChange,
+  trigger,
 }) => {
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -150,7 +153,7 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({
       open={open}
       onOpenChange={onOpenChange}
     >
-      <div />
+      {trigger}
     </Popover>
   );
 }; 

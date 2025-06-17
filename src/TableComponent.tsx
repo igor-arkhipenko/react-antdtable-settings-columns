@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Table, message, Input, Button, Card, Space } from 'antd';
+import { SettingOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { ColumnSettings } from './components/ColumnSettings';
 import type { DataType, ColumnKey, TableSettings } from './types';
@@ -110,12 +111,6 @@ const TableComponent: React.FC = () => {
       sorter: config.sorter,
       sortDirections: ['ascend', 'descend'],
       hidden: !tableSettings.visibility[config.key],
-      onHeaderCell: () => ({
-        onContextMenu: (e: React.MouseEvent) => {
-          e.preventDefault();
-          setPopoverOpen(true);
-        },
-      }),
     };
   }).filter(Boolean) as ColumnsType<DataType>;
 
@@ -124,15 +119,25 @@ const TableComponent: React.FC = () => {
   return (
     <div style={{ padding: '24px', display: 'flex', gap: '24px' }}>
       <div style={{ flex: 1 }}>
-        <ColumnSettings
-          tempVisibility={tempVisibility}
-          onVisibilityChange={handleColumnVisibilityChange}
-          onCancel={handleCancelChanges}
-          open={popoverOpen}
-          onOpenChange={setPopoverOpen}
-          columnOrder={tableSettings.order}
-          onColumnOrderChange={handleColumnOrderChange}
-        />
+        <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+          <ColumnSettings
+            tempVisibility={tempVisibility}
+            onVisibilityChange={handleColumnVisibilityChange}
+            onCancel={handleCancelChanges}
+            open={popoverOpen}
+            onOpenChange={setPopoverOpen}
+            columnOrder={tableSettings.order}
+            onColumnOrderChange={handleColumnOrderChange}
+            trigger={
+              <Button 
+                icon={<SettingOutlined />} 
+                onClick={() => setPopoverOpen(true)}
+              >
+                Настройки колонок
+              </Button>
+            }
+          />
+        </div>
         <Table 
           columns={visibleColumns} 
           dataSource={filteredData}
