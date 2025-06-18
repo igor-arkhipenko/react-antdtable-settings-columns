@@ -21,12 +21,12 @@ import { CSS } from '@dnd-kit/utilities';
 import styles from './ColumnSettings.module.css';
 
 // Generic interface for column configuration
-export interface ColumnConfig<T = any> {
+export interface ColumnConfig<T = Record<string, unknown>> {
   key: string;
   title: string;
   dataIndex?: keyof T;
   sorter?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // Generic interface for column visibility
@@ -35,7 +35,7 @@ export interface ColumnVisibility {
 }
 
 // Props interface for the reusable component
-export interface ColumnSettingsProps<T = any> {
+export interface ColumnSettingsProps<T = Record<string, unknown>> {
   // Column configurations
   columns: ColumnConfig<T>[];
   
@@ -99,7 +99,7 @@ const SortableItem: React.FC<{
   );
 };
 
-export const ColumnSettings = <T extends Record<string, any> = any>({
+export const ColumnSettings = <T extends Record<string, unknown> = Record<string, unknown>>({
   columns,
   visibility,
   columnOrder,
