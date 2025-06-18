@@ -1,20 +1,22 @@
 import React from 'react';
-import { Flex, Space, Button, Tooltip } from 'antd';
+import { Flex, Space, Button } from 'antd';
 import { SettingOutlined, FileExcelOutlined } from '@ant-design/icons';
-import { ColumnSettings } from './ColumnSettings';
-import type { ColumnVisibility, ColumnKey } from '../types';
+import { ColumnSettings, type ColumnConfig, type ColumnVisibility } from './ColumnSettings';
+import type { DataType } from '../types';
 
 interface TableHeaderProps {
+  columns: ColumnConfig<DataType>[];
   tempVisibility: ColumnVisibility;
-  onVisibilityChange: (column: ColumnKey, checked: boolean) => void;
+  onVisibilityChange: (columnKey: string, checked: boolean) => void;
   onCancel: () => void;
   popoverOpen: boolean;
   onPopoverOpenChange: (open: boolean) => void;
-  columnOrder: ColumnKey[];
-  onColumnOrderChange: (newOrder: ColumnKey[]) => void;
+  columnOrder: string[];
+  onColumnOrderChange: (newOrder: string[]) => void;
 }
 
 export const TableHeader: React.FC<TableHeaderProps> = ({
+  columns,
   tempVisibility,
   onVisibilityChange,
   onCancel,
@@ -26,25 +28,24 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
   return (
     <Flex justify='end' align='center'>
       <Space>
-        <Button 
-          type="primary" 
+        <Button
+          type="primary"
           icon={<FileExcelOutlined />}
           onClick={() => console.log('export to excel')}
         >
           Выгрузка в Excel
         </Button>
         <ColumnSettings
-          tempVisibility={tempVisibility}
+          columns={columns}
+          visibility={tempVisibility}
+          columnOrder={columnOrder}
           onVisibilityChange={onVisibilityChange}
+          onColumnOrderChange={onColumnOrderChange}
           onCancel={onCancel}
           open={popoverOpen}
           onOpenChange={onPopoverOpenChange}
-          columnOrder={columnOrder}
-          onColumnOrderChange={onColumnOrderChange}
           trigger={
-            <Tooltip title='Настройки колонок'>
-              <Button type='link' icon={<SettingOutlined />} onClick={() => onPopoverOpenChange(true)} />
-            </Tooltip>
+            <Button type='link' icon={<SettingOutlined />} onClick={() => onPopoverOpenChange(true)} />
           }
         />
       </Space>

@@ -18,11 +18,62 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { ColumnVisibility, ColumnKey, SortableItemProps } from '../types';
-import { COLUMN_CONFIGS } from '../constants';
 import styles from './ColumnSettings.module.css';
 
-const SortableItem: React.FC<SortableItemProps> = ({ id, title, checked, onChange, disabled }) => {
+// Generic interface for column configuration
+export interface ColumnConfig<T = any> {
+  key: string;
+  title: string;
+  dataIndex?: keyof T;
+  sorter?: boolean;
+  [key: string]: any;
+}
+
+// Generic interface for column visibility
+export interface ColumnVisibility {
+  [key: string]: boolean;
+}
+
+// Props interface for the reusable component
+export interface ColumnSettingsProps<T = any> {
+  // Column configurations
+  columns: ColumnConfig<T>[];
+  
+  // Current visibility state
+  visibility: ColumnVisibility;
+  
+  // Current column order
+  columnOrder: string[];
+  
+  // Callbacks
+  onVisibilityChange: (columnKey: string, checked: boolean) => void;
+  onColumnOrderChange: (newOrder: string[]) => void;
+  onCancel?: () => void;
+  
+  // Popover state
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  
+  // Trigger element
+  trigger?: React.ReactNode;
+  
+  // Customization
+  title?: string;
+  cancelText?: string;
+  minVisibleColumns?: number;
+  
+  // Styling
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+const SortableItem: React.FC<{
+  id: string;
+  title: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled: boolean;
+}> = ({ id, title, checked, onChange, disabled }) => {
   const {
     attributes,
     listeners,
@@ -48,27 +99,22 @@ const SortableItem: React.FC<SortableItemProps> = ({ id, title, checked, onChang
   );
 };
 
-interface ColumnSettingsProps {
-  tempVisibility: ColumnVisibility;
-  onVisibilityChange: (column: ColumnKey, checked: boolean) => void;
-  onCancel: () => void;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  columnOrder: ColumnKey[];
-  onColumnOrderChange: (newOrder: ColumnKey[]) => void;
-  trigger?: React.ReactNode;
-}
-
-export const ColumnSettings: React.FC<ColumnSettingsProps> = ({
-  tempVisibility,
+export const ColumnSettings = <T extends Record<string, any> = any>({
+  columns,
+  visibility,
+  columnOrder,
   onVisibilityChange,
+  onColumnOrderChange,
   onCancel,
   open,
   onOpenChange,
-  columnOrder,
-  onColumnOrderChange,
   trigger,
-}) => {
+  title = "Показать столбцы",
+  cancelText = "Отменить изменения",
+  minVisibleColumns = 1,
+  className,
+  style,
+}: ColumnSettingsProps<T>) => {
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -80,27 +126,27 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({
     const { active, over } = event;
     
     if (active.id !== over?.id) {
-      const oldIndex = columnOrder.indexOf(active.id as ColumnKey);
-      const newIndex = columnOrder.indexOf(over?.id as ColumnKey);
+      const oldIndex = columnOrder.indexOf(active.id as string);
+      const newIndex = columnOrder.indexOf(over?.id as string);
       const newOrder = arrayMove(columnOrder, oldIndex, newIndex);
       onColumnOrderChange(newOrder);
     }
   };
 
-  const handleVisibilityChange = (column: ColumnKey, checked: boolean) => {
+  const handleVisibilityChange = (columnKey: string, checked: boolean) => {
     if (!checked) {
-      const visibleColumnsCount = Object.values(tempVisibility).filter(Boolean).length;
-      if (visibleColumnsCount <= 1) {
+      const visibleColumnsCount = Object.values(visibility).filter(Boolean).length;
+      if (visibleColumnsCount <= minVisibleColumns) {
         return;
       }
     }
-    onVisibilityChange(column, checked);
+    onVisibilityChange(columnKey, checked);
   };
 
   const content = (
-    <div className={styles.popoverContent}>
+    <div className={`${styles.popoverContent} ${className || ''}`} style={style}>
       <div className={styles.popoverHeader}>
-        <h4>Показать столбцы</h4>
+        <h4>{title}</h4>
       </div>
       <Space direction="vertical" style={{ width: '100%' }}>
         <DndContext
@@ -113,16 +159,18 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({
             strategy={verticalListSortingStrategy}
           >
             {columnOrder.map((columnKey) => {
-              const config = COLUMN_CONFIGS.find(c => c.key === columnKey);
+              const config = columns.find(c => c.key === columnKey);
               if (!config) return null;
-              const isLastVisible = tempVisibility[config.key] && 
-                Object.values(tempVisibility).filter(Boolean).length === 1;
+              
+              const isLastVisible = visibility[config.key] && 
+                Object.values(visibility).filter(Boolean).length === minVisibleColumns;
+              
               return (
                 <SortableItem
                   key={config.key}
                   id={config.key}
                   title={config.title}
-                  checked={tempVisibility[config.key]}
+                  checked={visibility[config.key]}
                   onChange={(checked) => handleVisibilityChange(config.key, checked)}
                   disabled={isLastVisible}
                 />
@@ -131,16 +179,18 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({
           </SortableContext>
         </DndContext>
       </Space>
-      <div className={styles.popoverFooter}>
-        <Button 
-          type="text" 
-          onClick={onCancel} 
-          className={styles.popoverFooterButton}
-          icon={<RollbackOutlined />}
-        >
-          Отменить изменения
-        </Button>
-      </div>
+      {onCancel && (
+        <div className={styles.popoverFooter}>
+          <Button 
+            type="text" 
+            onClick={onCancel} 
+            className={styles.popoverFooterButton}
+            icon={<RollbackOutlined />}
+          >
+            {cancelText}
+          </Button>
+        </div>
+      )}
     </div>
   );
 

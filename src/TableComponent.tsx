@@ -5,6 +5,7 @@ import { TableFilters } from './components/TableFilters';
 import { TableHeader } from './components/TableHeader';
 import type { DataType, ColumnKey, TableSettings } from './types';
 import { STORAGE_KEYS, DEFAULT_VISIBILITY, COLUMN_CONFIGS, TABLE_DATA } from './constants';
+import type { ColumnConfig } from './components/ColumnSettings';
 
 const TableComponent: React.FC = () => {
   const [tableSettings, setTableSettings] = useState<TableSettings>(() => {
@@ -64,10 +65,10 @@ const TableComponent: React.FC = () => {
     setFilteredData([...TABLE_DATA]);
   };
 
-  const handleColumnVisibilityChange = useCallback((column: ColumnKey, checked: boolean) => {
+  const handleColumnVisibilityChange = useCallback((columnKey: string, checked: boolean) => {
     const newVisibility = {
       ...tempVisibility,
-      [column]: checked
+      [columnKey]: checked
     };
     setTempVisibility(newVisibility);
     setTableSettings(prev => ({
@@ -78,7 +79,7 @@ const TableComponent: React.FC = () => {
     if (!checked) {
       setFilters(prev => {
         const newFilters = { ...prev };
-        delete newFilters[column];
+        delete newFilters[columnKey];
         return newFilters;
       });
     }
@@ -93,12 +94,23 @@ const TableComponent: React.FC = () => {
     setPopoverOpen(false);
   }, []);
 
-  const handleColumnOrderChange = useCallback((newOrder: ColumnKey[]) => {
+  const handleColumnOrderChange = useCallback((newOrder: string[]) => {
     setTableSettings(prev => ({
       ...prev,
-      order: newOrder
+      order: newOrder as ColumnKey[]
     }));
   }, []);
+
+  // Adapter for column configuration
+  const adaptedColumns: ColumnConfig<DataType>[] = COLUMN_CONFIGS.map(config => ({
+    key: config.key,
+    title: config.title,
+    dataIndex: config.dataIndex,
+    sorter: !!config.sorter,
+  }));
+
+  // Adapter for visibility
+  const adaptedVisibility = tempVisibility as unknown as Record<string, boolean>;
 
   const columns: ColumnsType<DataType> = tableSettings.order.map(columnKey => {
     const config = COLUMN_CONFIGS.find(c => c.key === columnKey);
@@ -120,7 +132,8 @@ const TableComponent: React.FC = () => {
       <Row>
         <Col span={18}>
           <TableHeader
-            tempVisibility={tempVisibility}
+            columns={adaptedColumns}
+            tempVisibility={adaptedVisibility}
             onVisibilityChange={handleColumnVisibilityChange}
             onCancel={handleCancelChanges}
             popoverOpen={popoverOpen}
